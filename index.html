@@ -894,9 +894,10 @@ dialog::backdrop{background:rgba(28,34,38,.35)}
       var rows=[
         ["Google Sheet",true,d.sheet],
         ["Apps Script bản mới",d.version>=NEED_VER,d.version>=NEED_VER?"phiên bản "+d.version:"đang chạy bản cũ — dán lại WebApp.gs rồi Triển khai → Phiên bản mới"],
-        ["Quyền ghi Google Drive",d.driveOk,d.driveOk?"thư mục “"+d.folder+"”":(d.driveError||"chưa cấp quyền")+" — chạy hàm testWebApp trong Apps Script rồi Triển khai → Phiên bản mới"]
+        ["Ghi file vào Google Drive",d.driveOk,d.driveOk?"thư mục “"+d.folder+"”":(d.driveError||"chưa cấp quyền")+" — chạy hàm testWebApp trong Apps Script rồi Triển khai → Phiên bản mới"],
+        ["Hiển thị ảnh cho người xem",d.driveOk?d.shareOk:null,!d.driveOk?"—":d.shareOk?(d.shareError||"ai có link đều xem được"):(d.shareError||"tổ chức chặn chia sẻ file")]
       ];
-      box.innerHTML=rows.map(function(r){return'<div class="dg '+(r[1]?"ok":"bad")+'"><b>'+(r[1]?"✓":"✗")+" "+esc(r[0])+'</b><span>'+esc(r[2])+'</span></div>'}).join("");
+      box.innerHTML=rows.map(function(r){var v=r[1],cls=v===null?"":(v?"ok":"bad"),mark=v===null?"–":(v?"✓":"✗");return'<div class="dg '+cls+'"><b>'+mark+" "+esc(r[0])+'</b><span>'+esc(r[2])+'</span></div>'}).join("");
     }).catch(function(e){
       box.innerHTML='<div class="dg bad"><b>✗ Apps Script chưa có chức năng kiểm tra</b><span>'+esc(e&&e.error&&/Không rõ thao tác/.test(e.error)?"Đang chạy bản cũ — dán lại WebApp.gs mới rồi Triển khai → Phiên bản mới.":errText(e))+'</span></div>';
     });
