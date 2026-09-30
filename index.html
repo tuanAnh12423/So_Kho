@@ -299,6 +299,32 @@ dialog::backdrop{background:rgba(28,34,38,.35)}
 .mvhead p{margin:0;color:var(--muted);font-size:13px}
 .mark{background:#FBEFC2;color:inherit;border-radius:2px;padding:0 1px}
 
+/* ===== Hàng hết: làm mờ (mọi màn hình) ===== */
+.row.is-out .thumb img{opacity:.5;filter:grayscale(.6)}
+.row.is-out .t b{color:var(--muted)}
+.btn.icon svg{width:19px;height:19px;display:block}
+
+/* ===== Điện thoại (< 900px): thẻ tách rời, gọn hơn ===== */
+@media (max-width:899px){
+  .sync{background:transparent;padding:3px 4px;font-size:12px}
+  .summary{font-size:12px}
+  .chips{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent)}
+  #itemList{border:0;border-radius:0;overflow:visible;display:flex;flex-direction:column;gap:8px}
+  #itemList .row{border:1px solid var(--line);border-radius:14px;padding:10px 12px;box-shadow:0 1px 2px rgba(28,34,38,.04)}
+  #itemList .row .meta .mono{font-family:var(--sans);font-size:12px;color:var(--muted)}
+  #itemList .row .meta{gap:8px}
+  #itemList .q b{font-size:21px}
+  #itemList .q .chip{background:none;padding:0;font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:5px}
+  #itemList .q .chip::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+  #itemList .empty{border:1px dashed var(--line-strong);border-radius:14px}
+}
+@media (max-width:700px){
+  .bar{box-shadow:0 -8px 20px rgba(28,34,38,.07);border-top-color:transparent}
+  .bar .btn::before{font-size:24px;font-weight:500;line-height:1}
+  #btnIn::before{content:"+"}
+  #btnOut::before{content:"−"}
+}
+
 /* ===== Bố cục chung (mọi màn hình) ===== */
 .layout{display:grid;grid-template-columns:1fr;gap:24px;align-items:start}
 .mainc{display:flex;flex-direction:column;gap:14px;min-width:0}
@@ -435,7 +461,7 @@ dialog::backdrop{background:rgba(28,34,38,.35)}
       <button class="btn sm in desk-only" id="btnInTop">Nhập kho</button>
       <button class="btn sm out desk-only" id="btnOutTop">Xuất kho</button>
       <button class="btn sm" id="btnAdd">+ Hàng</button>
-      <button class="btn icon" id="btnSettings" aria-label="Cài đặt kết nối">⚙</button>
+      <button class="btn icon" id="btnSettings" aria-label="Cài đặt kết nối"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
     </div>
   </div>
 </header>
@@ -682,7 +708,7 @@ function num(n){return vnd.format(n||0)}
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function norm(s){return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLowerCase()}
 function status(it){var q=+it.qty||0,m=+it.min||0;if(q<=0)return"out";if(q<=m)return"low";return"ok"}
-var ST={ok:"Đủ hàng",low:"Sắp hết",out:"Hết hàng"},RANK={out:0,low:1,ok:2};
+var ST={ok:"Đủ hàng",low:"Sắp hết",out:"Hết hàng"},RANK={out:0,low:1,ok:2},SRANK={low:0,ok:1,out:2}; // SRANK: thứ tự trong danh sách (hết hàng xuống cuối)
 function p2(n){return String(n).padStart(2,"0")}
 function fmtTime(ms){if(!ms)return"—";var d=new Date(ms);var s=p2(d.getHours())+":"+p2(d.getMinutes());return(d.getHours()||d.getMinutes())?s:""}
 function fmtDT(ms){if(!ms)return"—";var d=new Date(ms);return p2(d.getDate())+"/"+p2(d.getMonth()+1)+"/"+d.getFullYear()+((d.getHours()||d.getMinutes())?" "+p2(d.getHours())+":"+p2(d.getMinutes()):"")}
@@ -996,7 +1022,7 @@ function sortFn(){
     else if(k==="min")r=(+a.min||0)-(+b.min||0);
     else if(k==="qty")r=(+a.qty||0)-(+b.qty||0);
     else if(k==="val")r=(+a.qty||0)*(+a.price||0)-(+b.qty||0)*(+b.price||0);
-    else r=RANK[status(a)]-RANK[status(b)];
+    else r=SRANK[status(a)]-SRANK[status(b)];
     return r*dir||byName(a,b);
   };
 }
@@ -1061,7 +1087,7 @@ function thumbHtml(it){
 }
 function itemRow(it){
   var st=status(it),q=+it.qty||0;
-  return'<div class="row" role="button" tabindex="0" data-sku="'+esc(it.sku)+'">'+thumbHtml(it)+
+  return'<div class="row'+(st==="out"?" is-out":"")+'" role="button" tabindex="0" data-sku="'+esc(it.sku)+'">'+thumbHtml(it)+
     '<span class="t"><b>'+esc(it.name)+'</b><span class="meta"><span class="mono">'+esc(it.sku)+'</span>'+
     (it.loc?'<span class="loc">'+esc(it.loc)+'</span>':'')+(it.pending?'<span class="chip pend">đang gửi</span>':'')+'</span></span>'+
     '<span class="c-cat">'+esc(it.cat||"—")+'</span>'+
