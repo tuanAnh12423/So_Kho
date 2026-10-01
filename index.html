@@ -450,6 +450,28 @@ dialog::backdrop{background:rgba(28,34,38,.35)}
   .c-val{display:block;font-family:var(--mono);text-align:right;color:var(--muted);font-size:13px}
   .thead,.row{grid-template-columns:40px minmax(220px,2.2fr) minmax(100px,1fr) 100px 76px 150px 110px 160px}
 }
+
+/* ---- Mẫu hàng nhiều màu / size ---- */
+.gm-c{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.gm-ch{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:600;margin-bottom:8px}
+.gm-ch small{color:var(--muted);font-weight:500}
+.gm-cells{display:flex;flex-wrap:wrap;gap:6px}
+.gm-cell{display:flex;flex-direction:column;align-items:center;gap:3px;width:60px;font-size:12px;color:var(--muted);font-weight:600}
+.gm-cell .gm-s{color:var(--ink);font-size:14px;font-weight:700}
+.gm-cell input{width:100%;border:1px solid var(--line-strong);border-radius:9px;padding:8px 2px;text-align:center;font-family:var(--mono);font-size:17px;font-weight:600;background:var(--bg)}
+.gm-cell input:disabled{background:var(--surface);opacity:.55}
+.gm-cell.has input{border-color:var(--ink);background:var(--in-soft)}
+.gm-cell small{font-weight:500}
+.gm-cell.zero small{color:var(--out)}
+.gm-ch{flex-wrap:wrap}
+.gm-ph{display:flex;gap:6px;flex:1;min-width:0;flex-wrap:wrap}
+.gm-ph .ph{position:relative;width:44px;height:44px;border-radius:8px;overflow:hidden;border:1px solid var(--line);cursor:zoom-in;background:var(--surface)}
+.gm-ph .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.gm-ph .ph .x{position:absolute;top:0;right:0;width:18px;height:18px;border:0;background:rgba(28,34,38,.7);color:#fff;font-size:13px;line-height:18px;padding:0;cursor:pointer}
+.gm-s[data-det]{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
+.gm-cell .own{font-size:11px;color:var(--in);font-weight:600}
+.pre-row{display:flex;flex-wrap:wrap;gap:6px}
+.chip.zero{background:var(--out-soft);color:var(--out)}
 </style>
 </head>
 <body>
@@ -461,6 +483,7 @@ dialog::backdrop{background:rgba(28,34,38,.35)}
       <button class="btn sm in desk-only" id="btnInTop">Nhập kho</button>
       <button class="btn sm out desk-only" id="btnOutTop">Xuất kho</button>
       <button class="btn sm" id="btnAdd">+ Hàng</button>
+      <button class="btn sm" id="btnAddGrp" title="Mẫu có nhiều màu / size">+ Mẫu size</button>
       <button class="btn icon" id="btnSettings" aria-label="Cài đặt kết nối"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
     </div>
   </div>
@@ -639,6 +662,61 @@ dialog::backdrop{background:rgba(28,34,38,.35)}
   </form>
 </dialog>
 
+<!-- Tạo mẫu hàng nhiều màu / size -->
+<dialog id="dlgGroup">
+  <form id="formGroup" novalidate>
+    <div class="dh"><h2 id="grpTitle">Thêm mẫu nhiều màu / size</h2><button type="button" class="btn sm ghost" data-close>Đóng</button></div>
+    <div class="db">
+      <label class="full">Tên mẫu<input id="gName" class="field" required maxlength="100" placeholder="VD: Áo polo Toshiba"></label>
+      <label>Mã mẫu<input id="gCode" class="field mono" required maxlength="16" autocomplete="off" placeholder="VD: POLO"></label>
+      <label>Đơn vị tính<input id="gUnit" class="field" value="cái" maxlength="20"></label>
+      <label class="full">Màu <span class="hint" style="display:inline">(cách nhau dấu phẩy, bỏ trống nếu không có màu)</span><input id="gColors" class="field" placeholder="Đỏ, Xanh, Đen" autocomplete="off"></label>
+      <div class="full lbl">Size <span class="hint" style="display:inline">(chữ hoặc số, cách nhau dấu phẩy)</span>
+        <input id="gSizes" class="field" placeholder="S, M, L, XL" autocomplete="off">
+        <div class="pre-row" id="gPre"></div>
+      </div>
+      <label>Nhóm hàng<input id="gCat" class="field" list="catList" maxlength="60" value="Quần áo"></label>
+      <label>Vị trí kệ<input id="gLoc" class="field mono" maxlength="40" placeholder="VD: A-02-3"></label>
+      <label>Tồn tối thiểu (mỗi mã)<input id="gMin" class="field mono" type="number" min="0" step="1" value="0" inputmode="numeric"></label>
+      <label>Đơn giá (đ)<input id="gPrice" class="field mono" type="number" min="0" step="1" value="0" inputmode="numeric"></label>
+      <label class="full">Mô tả / ghi chú<input id="gDesc" class="field" maxlength="300" placeholder="Chất liệu, nhà cung cấp…"></label>
+      <div class="full lbl">Tồn ban đầu <span class="hint" style="display:inline" id="gGridHint">(tùy chọn — nhập số lượng từng màu × size)</span>
+        <div id="gGrid"></div>
+      </div>
+    </div>
+    <div class="df">
+      <span class="err" id="grpErr"></span>
+      <div class="right"><button type="button" class="btn" data-close>Hủy</button><button type="submit" class="btn dark" id="grpSave">Tạo mẫu</button></div>
+    </div>
+  </form>
+</dialog>
+
+<!-- Nhập / xuất theo lưới màu × size -->
+<dialog id="dlgGM">
+  <form id="formGM" novalidate>
+    <div class="dh"><h2 id="gmTitle">Nhập kho</h2><button type="button" class="btn sm ghost" data-close>Đóng</button></div>
+    <div class="db one">
+      <div class="seg" role="group" aria-label="Loại giao dịch">
+        <button type="button" class="in" id="gmIn" aria-pressed="true">Nhập kho</button>
+        <button type="button" class="out" id="gmOut" aria-pressed="false">Xuất kho</button>
+      </div>
+      <div id="gmInfo" class="sel"></div>
+      <div class="lbl"><span id="gmGridLbl">Số lượng từng màu × size</span>
+        <div id="gmGrid"></div>
+        <p class="after" id="gmSum"></p>
+        <p class="hint">Ảnh ở đầu mỗi màu dùng chung cho mọi size của màu đó. Muốn ảnh riêng cho một size: chạm vào tên size.</p>
+      </div>
+      <div class="lbl">Ảnh minh chứng <span class="hint" style="display:inline">(tùy chọn, tối đa 10 — dùng chung cho cả phiếu)</span><div id="gmPick"></div></div>
+      <label>Ghi chú<input id="gmNote" class="field" list="noteList" placeholder="Số phiếu, người nhận, KTV…" maxlength="200"></label>
+      <div><button type="button" class="btn sm" id="gmAddVar">+ Thêm màu / size</button></div>
+    </div>
+    <div class="df" style="flex-direction:column;align-items:stretch">
+      <span class="err" id="gmErr"></span>
+      <button type="submit" class="btn in go" id="gmSave">Ghi sổ</button>
+    </div>
+  </form>
+</dialog>
+
 <!-- Cài đặt kết nối -->
 <dialog id="dlgSet">
   <form id="formSet" novalidate>
@@ -690,7 +768,7 @@ dialog::backdrop{background:rgba(28,34,38,.35)}
 (function(){
 "use strict";
 var $=function(id){return document.getElementById(id)};
-var NEED_VER=4, MAX=10, UNDO_MS=5000;
+var NEED_VER=6, MAX=10, UNDO_MS=5000;
 var S={server:{items:[],moves:[]},view:{items:[],moves:[]},pending:[],mode:"boot",tab:"stock",filter:"all",hFilter:"all",
        detail:null,slide:0,moveType:"in",mSku:null,netFail:false,loading:false,lastSync:0,oldServer:false,idbOK:true};
 S.sort=lsGet("sokho.sort",{k:"status",d:"asc"});
@@ -868,6 +946,26 @@ function applyJob(v,job,pend){
     it.localUrls=(it.localUrls||[]).concat(urlsFor(job,b.photos));if(pend)it.pending=true;
   }else if(a==="deleteItem"){
     v.items=v.items.filter(function(x){return x.sku!==b.sku});
+  }else if(a==="addGroup"){
+    var g=b.group;
+    g.variants.forEach(function(x){
+      if(find(v.items,x.sku))return;
+      v.items.push({sku:x.sku,name:varName(g.gn,x.color,x.size),cat:g.cat,unit:g.unit,loc:g.loc,min:g.min,price:g.price,desc:g.desc,qty:x.qty||0,photoIds:[],localUrls:[],
+        g:g.g,gn:g.gn,color:x.color,size:x.size,pending:pend});
+      if(x.qty>0)v.moves.unshift({at:job.at,type:"in",sku:x.sku,name:varName(g.gn,x.color,x.size),unit:g.unit,qty:x.qty,note:"Tồn đầu kỳ khi tạo mẫu",photoIds:[],pending:pend});
+    });
+  }else if(a==="addGroupPhotos"){
+    var lu2=urlsFor(job,b.photos);
+    v.items.forEach(function(x){if(x.g===b.g&&(x.color||"")===b.color){x.localUrls=(x.localUrls||[]).concat(lu2);if(pend)x.pending=true}});
+  }else if(a==="removeGroupPhotos"){
+    v.items.forEach(function(x){if(x.g===b.g&&(x.color||"")===b.color)x.photoIds=idsOf(x).filter(function(id){return b.ids.indexOf(id)<0})});
+  }else if(a==="moveBatch"){
+    var bt=b.batch,lu=urlsFor(job,bt.photos);
+    bt.lines.forEach(function(l){
+      var x=find(v.items,l.sku);
+      if(x){x.qty=(+x.qty||0)+(bt.type==="in"?1:-1)*l.qty;if(pend)x.pending=true}
+      v.moves.unshift({at:job.at,type:bt.type,sku:l.sku,name:x?x.name:l.sku,unit:x?x.unit:"",qty:l.qty,note:bt.note||"",photoIds:[],localUrls:lu,pending:pend,rid:job.rid});
+    });
   }
 }
 function buildView(){
@@ -974,7 +1072,8 @@ function render(){
   items.forEach(function(it){tq+=+it.qty||0;tv+=(+it.qty||0)*(+it.price||0);var s=status(it);if(s==="low")nLow++;if(s==="out")nOut++});
   $("demoBanner").hidden=S.mode!=="demo";
   $("verBanner").hidden=!S.oldServer;
-  $("summary").innerHTML='<span><b>'+num(items.length)+'</b> mặt hàng</span><span>·</span><span><b>'+num(tq)+'</b> tồn</span>'+(tv?'<span>·</span><span><b>'+money(tv)+'</b></span>':'');
+  var allEntries=entriesOf(items);
+  $("summary").innerHTML='<span><b>'+num(allEntries.length)+'</b> mặt hàng</span><span>·</span><span><b>'+num(tq)+'</b> tồn</span>'+(tv?'<span>·</span><span><b>'+money(tv)+'</b></span>':'');
   $("cStock").textContent=items.length;$("cLog").textContent=moves.length;
 
   // chip lọc
@@ -986,14 +1085,15 @@ function render(){
 
   // danh sách hàng
   var q=norm($("q").value.trim());$("qClr").hidden=!q;
-  var rows=items.filter(function(it){
+  function matchIt(it){
     var f=S.filter,s=status(it);
     if(f==="low"&&s!=="low")return false;if(f==="out"&&s!=="out")return false;
     if(f.indexOf("cat:")===0&&it.cat!==f.slice(4))return false;
-    if(q&&norm([it.sku,it.name,it.loc,it.cat,it.desc].join(" ")).indexOf(q)<0)return false;
-    return true});
+    if(q&&!hit(it,q,[it.sku,it.name,it.loc,it.cat,it.desc,it.g,it.gn,it.color,it.size]))return false;
+    return true}
+  var rows=allEntries.filter(function(e){return e.grp?e.items.some(matchIt):matchIt(e)});
   rows.sort(sortFn());
-  $("itemList").innerHTML=rows.length?theadHtml()+rows.map(itemRow).join("")
+  $("itemList").innerHTML=rows.length?theadHtml()+rows.map(function(e){return e.grp?groupRow(e):itemRow(e)}).join("")
     :'<div class="empty">'+(S.mode==="boot"?"Đang tải dữ liệu kho…":items.length?"Không có mặt hàng khớp.":"Kho chưa có mặt hàng nào. Bấm “+ Hàng” để bắt đầu.")+'</div>';
 
   // lịch sử / tra cứu
@@ -1008,6 +1108,7 @@ function render(){
   syncLabel();
   if(S.detail&&$("dlgDetail").open)renderDetail();
   if($("dlgMove").open)renderPicker();
+  if($("dlgGM").open)renderGM();
   hydrate();
 }
 /* ---------- bảng hàng hóa trên máy tính: sắp xếp theo cột ---------- */
@@ -1403,10 +1504,12 @@ $("dStrip").addEventListener("click",function(e){var b=e.target.closest("button[
 $("itemList").addEventListener("click",function(e){
   var th=e.target.closest(".thead [data-sort]");if(th){setSort(th.dataset.sort);return}
   var r=e.target.closest(".row");if(!r)return;
-  var qa=e.target.closest("[data-qa]");if(qa){if(!qa.disabled)openMove(r.dataset.sku,qa.dataset.qa);return}
+  var qa=e.target.closest("[data-qa]");
+  if(r.dataset.grp){openGM(r.dataset.grp,qa&&!qa.disabled?qa.dataset.qa:"in");return}
+  if(qa){if(!qa.disabled)openMove(r.dataset.sku,qa.dataset.qa);return}
   openDetail(r.dataset.sku);
 });
-$("itemList").addEventListener("keydown",function(e){var r=e.target.classList&&e.target.classList.contains("row")?e.target:null;if(r&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openDetail(r.dataset.sku)}});
+$("itemList").addEventListener("keydown",function(e){var r=e.target.classList&&e.target.classList.contains("row")?e.target:null;if(r&&(e.key==="Enter"||e.key===" ")){e.preventDefault();if(r.dataset.grp)openGM(r.dataset.grp,"in");else openDetail(r.dataset.sku)}});
 $("dIn").onclick=function(){openMove(S.detail,"in")};
 $("dOut").onclick=function(){openMove(S.detail,"out")};
 $("dEdit").onclick=function(){openItem(bySku(S.detail))};
@@ -1542,6 +1645,9 @@ function setMoveType(t){
 }
 $("mIn").onclick=function(){setMoveType("in")};$("mOut").onclick=function(){setMoveType("out")};
 function optHtml(it){
+  if(it.grp)return'<button type="button" class="opt" data-pickg="'+esc(it.g)+'">'+thumbHtml(it)+
+    '<span style="min-width:0"><b>'+esc(it.name)+'</b><small class="mono">'+esc(it.g)+' · '+it.items.length+' màu/size</small></span>'+
+    '<span class="qn">'+num(it.qty)+' <small>'+esc(it.unit||"")+'</small></span></button>';
   return'<button type="button" class="opt" data-pick="'+esc(it.sku)+'">'+thumbHtml(it)+
     '<span style="min-width:0"><b>'+esc(it.name)+'</b><small class="mono">'+esc(it.sku)+(it.loc?" · "+esc(it.loc):"")+'</small></span>'+
     '<span class="qn">'+num(it.qty)+' <small>'+esc(it.unit||"")+'</small></span></button>';
@@ -1555,12 +1661,13 @@ function renderPicker(){
   }else{
     var q=norm($("mSearch").value.trim()),html="";
     if(!q){
-      var rc=recent().map(bySku).filter(Boolean);
+      var rc=entriesOf(recent().map(bySku).filter(Boolean)).slice(0,5);
       if(rc.length)html+='<div class="rh">Dùng gần đây</div>'+rc.slice(0,5).map(optHtml).join("");
-      var rest=S.view.items.filter(function(i){return rc.indexOf(i)<0}).sort(function(a,b){return String(a.name).localeCompare(String(b.name),"vi")});
+      var rcg={},rcs={};rc.forEach(function(e){if(e.grp)rcg[e.g]=1;else rcs[e.sku]=1});
+      var rest=entriesOf(S.view.items).filter(function(i){return i.grp?!rcg[i.g]:!rcs[i.sku]}).sort(function(a,b){return String(a.name).localeCompare(String(b.name),"vi")});
       if(rest.length)html+='<div class="rh">Tất cả mặt hàng</div>'+rest.slice(0,30).map(optHtml).join("");
     }else{
-      var hits=S.view.items.filter(function(i){return norm([i.sku,i.name,i.loc,i.cat].join(" ")).indexOf(q)>-1}).slice(0,30);
+      var hits=entriesOf(S.view.items.filter(function(i){return hit(i,q,[i.sku,i.name,i.loc,i.cat,i.g,i.gn,i.color,i.size])})).slice(0,30);
       html=hits.length?hits.map(optHtml).join(""):'<div class="empty" style="padding:18px">Không thấy “'+esc($("mSearch").value)+'”. <button type="button" class="btn sm" id="mNew">+ Tạo mặt hàng mới</button></div>';
     }
     $("mResults").innerHTML=html;
@@ -1569,7 +1676,9 @@ function renderPicker(){
   hydrate($("dlgMove"));
 }
 $("mSearch").addEventListener("input",renderPicker);
-$("mResults").addEventListener("click",function(e){var b=e.target.closest("[data-pick]");if(!b)return;S.mSku=b.dataset.pick;renderPicker();updateAfter()});
+$("mResults").addEventListener("click",function(e){
+  var bg=e.target.closest("[data-pickg]");if(bg){var t=S.moveType;$("dlgMove").close();openGM(bg.dataset.pickg,t);return}
+  var b=e.target.closest("[data-pick]");if(!b)return;S.mSku=b.dataset.pick;renderPicker();updateAfter()});
 function qty(){return Math.max(0,Math.floor(+$("mQty").value||0))}
 function setQty(n){$("mQty").value=Math.max(1,n);updateAfter()}
 $("qMinus").onclick=function(){setQty(qty()-1)};$("qPlus").onclick=function(){setQty(qty()+1)};
@@ -1607,6 +1716,204 @@ $("formMove").addEventListener("submit",function(e){
     $("dlgMove").close();$("moveErr").textContent="";photos.move={add:[],remove:[]};pushRecent(it.sku);
     enqueue("move",{move:m},(type==="in"?"Đã nhập ":"Đã xuất ")+num(q)+" "+(it.unit||"")+" "+it.name+(ph.length?" · "+ph.length+" ảnh":""),true);
   }).then(function(){$("moveSave").disabled=false});
+});
+
+/* ================= Mẫu hàng nhiều màu / size ================= */
+// khớp từng từ (VD "polo xl" khớp "Áo polo · Đỏ · XL") — q đã được norm()
+function hit(it,q,fields){var h=norm(fields.join(" "));return q.split(/\s+/).every(function(w){return!w||h.indexOf(w)>-1})}
+function slugU(x){return String(x||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toUpperCase().replace(/\./g,"_").replace(/[^A-Z0-9_]+/g,"")}
+function skuOf(code,color,size){return code+(color?"-"+slugU(color):"")+(size?"-"+slugU(size):"")}
+function varName(gn,color,size){return gn+(color?" · "+color:"")+(size?" · "+size:"")}
+function parseList(v){var seen={},out=[];String(v||"").split(/[,;\n]+/).forEach(function(x){x=x.trim();var k=norm(x);if(x&&!seen[k]){seen[k]=1;out.push(x)}});return out}
+var SIZE_RANK={XXS:1,XS:2,S:3,M:4,L:5,XL:6,XXL:7,"2XL":7,XXXL:8,"3XL":8,FREE:90,FREESIZE:90};
+function sizeKey(z){var u=String(z||"").toUpperCase().replace(/\s+/g,"");if(SIZE_RANK[u])return[0,SIZE_RANK[u],""];var n=parseFloat(u);return isNaN(n)?[2,0,u]:[1,n,""]}
+function cmpSize(a,b){var x=sizeKey(a),y=sizeKey(b);return x[0]-y[0]||x[1]-y[1]||(x[2]<y[2]?-1:x[2]>y[2]?1:0)}
+function uniq(a){var s={};return a.filter(function(x){if(s[x])return false;s[x]=1;return true})}
+function groupItems(g){return S.view.items.filter(function(i){return i.g===g})}
+// Gom các dòng cùng "Mã mẫu" thành 1 thẻ (giữ nguyên thứ tự); hàng thường đi qua nguyên vẹn
+function entriesOf(items){
+  var out=[],gi={};
+  items.forEach(function(it){
+    if(!it.g){out.push(it);return}
+    var e=gi[it.g];
+    if(!e){e=gi[it.g]={grp:true,g:it.g,sku:it.g,name:it.gn||it.name,cat:it.cat,loc:it.loc,unit:it.unit,min:0,price:0,qty:0,desc:"",photoIds:[],localUrls:[],items:[],pending:false,val:0};out.push(e)}
+    e.items.push(it);e.qty+=+it.qty||0;e.min+=+it.min||0;e.val+=(+it.qty||0)*(+it.price||0);
+    if(it.pending)e.pending=true;
+    if(!e.photoIds.length&&idsOf(it).length)e.photoIds=idsOf(it);
+    if(!e.localUrls.length&&(it.localUrls||[]).length)e.localUrls=it.localUrls;
+  });
+  out.forEach(function(e){if(e.grp)e.price=e.qty?e.val/e.qty:(e.items[0]&&+e.items[0].price)||0});
+  return out;
+}
+function grpColors(e){return uniq(e.items.map(function(i){return i.color||""}).filter(Boolean))}
+function grpSizes(e){return uniq(e.items.map(function(i){return i.size||""}).filter(Boolean)).sort(cmpSize)}
+function grpOut(e){return e.items.filter(function(i){return(+i.qty||0)<=0}).length}
+function groupRow(e){
+  var st=status(e),q=+e.qty||0,cs=grpColors(e),zs=grpSizes(e),no=grpOut(e);
+  var sub=(cs.length?cs.length+" màu":"")+(cs.length&&zs.length?" · ":"")+(zs.length?zs.length+" size":"")||e.items.length+" mã";
+  return'<div class="row'+(st==="out"?" is-out":"")+'" role="button" tabindex="0" data-grp="'+esc(e.g)+'">'+thumbHtml(e)+
+    '<span class="t"><b>'+esc(e.name)+'</b><span class="meta"><span class="mono">'+esc(e.g)+'</span><span class="chip">'+esc(sub)+'</span>'+
+    (no&&st!=="out"?'<span class="chip zero">'+no+' mã hết</span>':'')+
+    (e.loc?'<span class="loc">'+esc(e.loc)+'</span>':'')+(e.pending?'<span class="chip pend">đang gửi</span>':'')+'</span></span>'+
+    '<span class="c-cat">'+esc(e.cat||"—")+'</span>'+
+    '<span class="c-loc">'+(e.loc?'<span class="loc">'+esc(e.loc)+'</span>':'<span class="hint">—</span>')+'</span>'+
+    '<span class="c-min">'+num(e.min)+'</span>'+
+    '<span class="q"><span class="chip '+st+'">'+ST[st]+'</span><b>'+num(q)+'<small>'+esc(e.unit||"")+'</small></b></span>'+
+    '<span class="c-val">'+(e.val?money(e.val):"—")+'</span>'+
+    '<span class="c-act"><button type="button" class="i" data-qa="in" title="Nhập kho">+ Nhập</button><button type="button" class="o" data-qa="out" title="Xuất kho"'+(q<=0?' disabled':'')+'>− Xuất</button></span></div>';
+}
+
+/* ---------- Lưới màu × size (dùng cho tạo mẫu và nhập/xuất) ---------- */
+// cells: [{sku,color,size,stock}]; vals: {sku:số}; opt: {out:bool}
+function gridHtml(cells,vals,opt){
+  var colors=uniq(cells.map(function(c){return c.color}));
+  return colors.map(function(col){
+    var row=cells.filter(function(c){return c.color===col}).sort(function(a,b){return cmpSize(a.size,b.size)});
+    var tot=row.reduce(function(n,c){return n+(+c.stock||0)},0),hasStock=row.some(function(c){return c.stock!=null});
+    var ph="";
+    if(opt.g){
+      var ci=colors.indexOf(col),cp=colorPics(opt.g,col);
+      G["col:"+opt.g+":"+ci]=cp.map(function(p){return{p:p,cap:(col||"Mẫu")+" — ảnh chung mọi size"}});
+      ph='<span class="gm-ph">'+cp.map(function(p,i){return'<span class="ph" data-g="col:'+esc(opt.g)+':'+ci+'" data-i="'+i+'">'+imgTag(p,"s","")+(p.id?'<button type="button" class="x" data-rmci="'+ci+'" data-rmid="'+esc(p.id)+'" aria-label="Bỏ ảnh">×</button>':'')+'</span>'}).join("")+
+        '<label class="pick-btn"><span class="cam" aria-hidden="true"></span>Ảnh '+(col?"màu":"mẫu")+'<input type="file" accept="image/*" multiple data-ci="'+ci+'"></label></span>';
+    }
+    return'<div class="gm-c"><div class="gm-ch"><span>'+esc(col||"Không phân màu")+'</span>'+(hasStock?'<small>tồn '+num(tot)+'</small>':'')+ph+'</div><div class="gm-cells">'+
+      row.map(function(c){
+        var v=vals[c.sku]||"",dis=opt.out&&c.stock!=null&&c.stock<=0;
+        return'<label class="gm-cell'+(v?" has":"")+(c.stock===0?" zero":"")+'"><span class="gm-s"'+(c.stock!=null&&opt.g?' data-det="'+esc(c.sku)+'" title="Xem / thêm ảnh riêng cho size này"':'')+'>'+esc(c.size||"—")+'</span>'+(c.own?'<span class="own">📷'+c.own+'</span>':'')+
+          '<input type="number" min="0" step="1" inputmode="numeric" placeholder="0" data-sku="'+esc(c.sku)+'" value="'+esc(v)+'"'+(dis?' disabled':'')+(opt.out&&c.stock!=null?' max="'+c.stock+'"':'')+'>'+
+          (c.stock!=null?'<small>tồn '+num(c.stock)+'</small>':'')+'</label>'}).join("")+'</div></div>';
+  }).join("");
+}
+// ảnh chung của 1 màu = ảnh có mặt ở mọi mã của màu đó
+function colorPics(g,color){
+  var its=groupItems(g).filter(function(i){return(i.color||"")===color});if(!its.length)return[];
+  var ids=idsOf(its[0]).filter(function(id){return its.every(function(i){return idsOf(i).indexOf(id)>-1})});
+  var out=ids.map(function(id){return{id:id}});
+  (its[0].localUrls||[]).forEach(function(u){out.push({local:u})});
+  return out;
+}
+function readVals(box,vals){box.querySelectorAll("input[data-sku]").forEach(function(inp){var n=Math.max(0,Math.floor(+inp.value||0));if(n)vals[inp.dataset.sku]=n;else delete vals[inp.dataset.sku]})}
+
+/* ---------- Nhập / xuất theo mẫu ---------- */
+var GM={g:null,vals:{}};
+function gmCells(){return groupItems(GM.g).map(function(i){
+  var cp=colorPics(GM.g,i.color||"").filter(function(p){return p.id}).map(function(p){return p.id});
+  return{sku:i.sku,color:i.color||"",size:i.size||"",stock:+i.qty||0,own:idsOf(i).filter(function(id){return cp.indexOf(id)<0}).length+(i.localUrls||[]).length-(colorPics(GM.g,i.color||"").filter(function(p){return p.local}).length)}})}
+function openGM(g,type){
+  if(!groupItems(g).length){toast("Không tìm thấy mẫu này");return}
+  GM={g:g,vals:{}};$("gmNote").value="";$("gmErr").textContent="";
+  photos.move={add:[],remove:[]};picker("move","gmPick",[],true);
+  setGMType(type||"in");$("dlgGM").showModal();
+}
+function setGMType(t){
+  S.moveType=t;$("gmIn").setAttribute("aria-pressed",t==="in");$("gmOut").setAttribute("aria-pressed",t==="out");
+  $("gmTitle").textContent=t==="in"?"Nhập kho":"Xuất kho";$("gmSave").className="btn go "+t;renderGM();
+}
+function renderGM(){
+  if(!GM.g)return;
+  var e=entriesOf(groupItems(GM.g))[0];if(!e){if($("dlgGM").open)$("dlgGM").close();return}
+  var box=$("gmGrid");readVals(box,GM.vals);
+  var out=S.moveType==="out";
+  $("gmInfo").innerHTML=thumbHtml(e)+'<span style="min-width:0"><b>'+esc(e.name)+'</b><small><span class="mono">'+esc(e.g)+'</span> · '+e.items.length+' mã · tồn '+num(e.qty)+' '+esc(e.unit||"")+'</small></span><span></span>';
+  box.innerHTML=gridHtml(gmCells(),GM.vals,{out:out,g:GM.g});
+  $("gmGridLbl").textContent=out?"Số lượng xuất từng màu × size":"Số lượng nhập từng màu × size";
+  hydrate($("dlgGM"));updateGM();
+}
+function gmLines(){var l=[];gmCells().forEach(function(c){var n=GM.vals[c.sku];if(n>0)l.push({sku:c.sku,qty:n,stock:c.stock,color:c.color,size:c.size})});return l}
+function updateGM(){
+  var out=S.moveType==="out",ls=gmLines(),tot=ls.reduce(function(n,l){return n+l.qty},0),bad=out?ls.filter(function(l){return l.qty>l.stock}):[];
+  var e=entriesOf(groupItems(GM.g))[0],u=e?e.unit||"":"";
+  $("gmSum").innerHTML=ls.length?'Tổng: <b>'+num(tot)+'</b> '+esc(u)+' · '+ls.length+' mã':'Chưa nhập số lượng nào.';
+  $("gmSave").textContent=ls.length?(out?"Xuất ":"Nhập ")+num(tot)+" "+u:(out?"Ghi sổ xuất":"Ghi sổ nhập");
+  $("gmErr").textContent=bad.length?"Không đủ hàng: "+bad.map(function(l){return(l.color?l.color+" ":"")+l.size}).join(", ")+".":"";
+  $("gmGrid").querySelectorAll(".gm-cell").forEach(function(c){var i=c.querySelector("input");c.classList.toggle("has",+i.value>0)});
+}
+$("gmGrid").addEventListener("input",function(e){if(!e.target.matches("input[data-sku]"))return;readVals($("gmGrid"),GM.vals);updateGM()});
+$("gmGrid").addEventListener("change",function(e){
+  var inp=e.target.closest("input[data-ci]");if(!inp)return;
+  var files=Array.prototype.slice.call(inp.files||[]);if(!files.length)return;
+  var colors=uniq(gmCells().map(function(c){return c.color})),color=colors[+inp.dataset.ci]||"";
+  if(files.length>MAX){toast("Tối đa "+MAX+" ảnh mỗi lần — đã lấy "+MAX+" ảnh đầu");files=files.slice(0,MAX)}
+  toast("Đang chuẩn bị "+files.length+" ảnh…",{ms:20000});
+  Promise.all(files.map(function(f){return shrink(f).then(toB64)})).then(function(ph){
+    enqueue("addGroupPhotos",{g:GM.g,color:color,photos:ph},"Đã thêm "+ph.length+" ảnh"+(color?" màu "+color:"")+" cho mọi size",true);
+  });
+});
+$("gmGrid").addEventListener("click",function(e){
+  var rm=e.target.closest("[data-rmid]");
+  if(rm){e.stopPropagation();var colors=uniq(gmCells().map(function(c){return c.color})),color=colors[+rm.dataset.rmci]||"";
+    enqueue("removeGroupPhotos",{g:GM.g,color:color,ids:[rm.dataset.rmid]},"Đã bỏ 1 ảnh"+(color?" màu "+color:""),true);return}
+  var d=e.target.closest("[data-det]");if(d)openDetail(d.dataset.det);
+});
+$("gmIn").onclick=function(){setGMType("in")};$("gmOut").onclick=function(){setGMType("out")};
+$("formGM").addEventListener("submit",function(ev){
+  ev.preventDefault();readVals($("gmGrid"),GM.vals);
+  var e=entriesOf(groupItems(GM.g))[0],ls=gmLines(),type=S.moveType;
+  if(!e)return;
+  if(!ls.length){$("gmErr").textContent="Nhập số lượng cho ít nhất một màu / size.";return}
+  if(type==="out"&&ls.some(function(l){return l.qty>l.stock})){updateGM();return}
+  var note=$("gmNote").value.trim(),st=photos.move,tot=ls.reduce(function(n,l){return n+l.qty},0);
+  $("gmSave").disabled=true;if(st.add.length)$("gmErr").textContent="Đang xử lý ảnh…";
+  readyPhotos(st.add).then(function(ph){
+    var b={type:type,g:e.g,gn:e.name,note:note,lines:ls.map(function(l){return{sku:l.sku,qty:l.qty}})};if(ph.length)b.photos=ph;
+    $("dlgGM").close();$("gmErr").textContent="";photos.move={add:[],remove:[]};
+    enqueue("moveBatch",{batch:b},(type==="in"?"Đã nhập ":"Đã xuất ")+num(tot)+" "+(e.unit||"")+" "+e.name+" ("+ls.length+" mã)"+(ph.length?" · "+ph.length+" ảnh":""),true);
+  }).then(function(){$("gmSave").disabled=false});
+});
+$("gmAddVar").onclick=function(){var e=entriesOf(groupItems(GM.g))[0];if(!e)return;$("dlgGM").close();openGroup(e)};
+
+/* ---------- Tạo mẫu / thêm màu, size vào mẫu cũ ---------- */
+var GN={vals:{},append:null,codeTouched:false};
+var PRESETS=[["S – XXL","S, M, L, XL, XXL"],["S – XL","S, M, L, XL"],["Áo trẻ em","100, 110, 120, 130, 140"],["Quần 28–34","28, 29, 30, 31, 32, 33, 34"],["Giày 38–44","38, 39, 40, 41, 42, 43, 44"],["Free size","Free size"]];
+$("gPre").innerHTML=PRESETS.map(function(p,i){return'<button type="button" class="btn sm" data-pre="'+i+'">'+esc(p[0])+'</button>'}).join("");
+$("gPre").addEventListener("click",function(e){var b=e.target.closest("[data-pre]");if(!b)return;$("gSizes").value=PRESETS[+b.dataset.pre][1];renderGN()});
+function autoCode(name){return norm(name).split(/\s+/).filter(Boolean).slice(0,3).map(function(w){return slugU(w).slice(0,4)}).join("").slice(0,12)}
+function gnCells(){
+  var cs=parseList($("gColors").value),zs=parseList($("gSizes").value),code=$("gCode").value.trim(),cells=[];
+  if(!cs.length)cs=[""];if(!zs.length)zs=[""];
+  cs.forEach(function(c){zs.forEach(function(z){if(!c&&!z)return;cells.push({sku:skuOf(code,c,z),color:c,size:z,stock:null})})});
+  return cells;
+}
+function renderGN(){
+  var box=$("gGrid");readVals(box,GN.vals);
+  var cells=gnCells();
+  if(GN.append)cells=cells.filter(function(c){return!bySku(c.sku)});
+  box.innerHTML=cells.length?gridHtml(cells,GN.vals,{out:false}):'<p class="hint">Nhập màu và/hoặc size ở trên để hiện lưới.</p>';
+  var n=cells.length;$("grpSave").textContent=GN.append?"Thêm "+n+" mã":"Tạo mẫu"+(n?" · "+n+" mã":"");
+}
+["gColors","gSizes","gCode"].forEach(function(id){$(id).addEventListener("input",function(){if(id==="gCode")GN.codeTouched=true;renderGN()})});
+$("gName").addEventListener("input",function(){if(!GN.append&&!GN.codeTouched){$("gCode").value=autoCode($("gName").value)}renderGN()});
+$("gGrid").addEventListener("input",function(e){if(e.target.matches("input[data-sku]")){readVals($("gGrid"),GN.vals);e.target.closest(".gm-cell").classList.toggle("has",+e.target.value>0)}});
+function openGroup(e){
+  GN={vals:{},append:e?e.g:null,codeTouched:!!e};
+  $("grpTitle").textContent=e?"Thêm màu / size cho “"+e.name+"”":"Thêm mẫu nhiều màu / size";
+  $("gName").value=e?e.name:"";$("gName").readOnly=!!e;$("gCode").value=e?e.g:"";$("gCode").readOnly=!!e;
+  var f=e?e.items[0]:null;
+  $("gUnit").value=f?f.unit||"":"cái";$("gCat").value=f?f.cat||"":"Quần áo";$("gLoc").value=f?f.loc||"":"";
+  $("gMin").value=f?f.min||0:0;$("gPrice").value=f?f.price||0:0;$("gDesc").value=f?f.desc||"":"";
+  $("gColors").value="";$("gSizes").value="";$("grpErr").textContent="";
+  $("gGridHint").textContent=e?"(số lượng nhập kho cho các mã mới)":"(tùy chọn — nhập số lượng từng màu × size)";
+  renderGN();$("dlgGroup").showModal();setTimeout(function(){(e?$("gColors"):$("gName")).focus()},50);
+}
+$("btnAddGrp").onclick=function(){openGroup(null)};
+$("formGroup").addEventListener("submit",function(ev){
+  ev.preventDefault();readVals($("gGrid"),GN.vals);
+  var gn=$("gName").value.trim(),code=slugU($("gCode").value.trim()).slice(0,16);
+  if(!gn||!code){$("grpErr").textContent="Cần nhập tên mẫu và mã mẫu.";return}
+  $("gCode").value=code;
+  var cells=gnCells();
+  if(!cells.length){$("grpErr").textContent="Nhập ít nhất một màu hoặc một size.";return}
+  var seen={};for(var i=0;i<cells.length;i++){if(seen[cells[i].sku]){$("grpErr").textContent="Hai màu/size cho cùng mã “"+cells[i].sku+"” — đổi tên cho khác nhau.";return}seen[cells[i].sku]=1}
+  if(!GN.append&&S.view.items.some(function(x){return x.g===code})){$("grpErr").textContent="Mã mẫu “"+code+"” đã có. Mở mẫu đó và bấm “+ Thêm màu / size”.";return}
+  if(!GN.append){var clash=cells.filter(function(c){return bySku(c.sku)});if(clash.length){$("grpErr").textContent="Mã “"+clash[0].sku+"” đã dùng cho mặt hàng khác — đổi mã mẫu.";return}}
+  var fresh=cells.filter(function(c){return!bySku(c.sku)});
+  if(!fresh.length){$("grpErr").textContent="Các màu / size này đã có trong mẫu.";return}
+  var grp={g:code,gn:gn,cat:$("gCat").value.trim(),unit:$("gUnit").value.trim(),loc:$("gLoc").value.trim(),
+    min:Math.max(0,Math.floor(+$("gMin").value||0)),price:Math.max(0,+$("gPrice").value||0),desc:$("gDesc").value.trim(),
+    variants:fresh.map(function(c){return{sku:c.sku,color:c.color,size:c.size,qty:GN.vals[c.sku]||0}})};
+  $("dlgGroup").close();
+  enqueue("addGroup",{group:grp},(GN.append?"Đã thêm ":"Đã tạo mẫu ")+gn+" · "+fresh.length+" mã",true);
 });
 
 /* ================= Cài đặt ================= */
