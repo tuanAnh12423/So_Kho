@@ -470,6 +470,8 @@ dialog::backdrop{background:rgba(28,34,38,.35)}
 .gm-ph .ph .x{position:absolute;top:0;right:0;width:18px;height:18px;border:0;background:rgba(28,34,38,.7);color:#fff;font-size:13px;line-height:18px;padding:0;cursor:pointer}
 .gm-s[data-det]{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
 .gm-cell .own{font-size:11px;color:var(--in);font-weight:600}
+.seg button[aria-pressed="true"].k{background:var(--btn);color:var(--btn-ink)}
+.kind-hint{margin:6px 2px 0;font-size:12.5px}
 .pre-row{display:flex;flex-wrap:wrap;gap:6px}
 .chip.zero{background:var(--out-soft);color:var(--out)}
 </style>
@@ -483,7 +485,6 @@ dialog::backdrop{background:rgba(28,34,38,.35)}
       <button class="btn sm in desk-only" id="btnInTop">Nhập kho</button>
       <button class="btn sm out desk-only" id="btnOutTop">Xuất kho</button>
       <button class="btn sm" id="btnAdd">+ Hàng</button>
-      <button class="btn sm" id="btnAddGrp" title="Mẫu có nhiều màu / size">+ Mẫu size</button>
       <button class="btn icon" id="btnSettings" aria-label="Cài đặt kết nối"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></button>
     </div>
   </div>
@@ -602,6 +603,10 @@ dialog::backdrop{background:rgba(28,34,38,.35)}
   <form id="formItem" novalidate>
     <div class="dh"><h2 id="itemTitle">Thêm mặt hàng</h2><button type="button" class="btn sm ghost" data-close>Đóng</button></div>
     <div class="db">
+      <div class="full" id="iKindWrap"><div class="seg" role="group" aria-label="Kiểu mặt hàng">
+        <button type="button" class="k" data-kind="one">Một mã</button>
+        <button type="button" class="k" data-kind="var">Nhiều màu / size</button>
+      </div><p class="hint kind-hint" id="iKindHint"></p></div>
       <div class="full lbl">Ảnh mặt hàng<div id="iPick"></div><p class="hint" id="iPickHint">Ảnh bỏ đi sẽ vào Thùng rác Drive (khôi phục được trong 30 ngày).</p></div>
       <label>Mã hàng<input id="iSku" class="field mono" required maxlength="40" autocomplete="off"></label>
       <label>Đơn vị tính<input id="iUnit" class="field" placeholder="cái, hộp, bộ…" maxlength="20"></label>
@@ -665,8 +670,12 @@ dialog::backdrop{background:rgba(28,34,38,.35)}
 <!-- Tạo mẫu hàng nhiều màu / size -->
 <dialog id="dlgGroup">
   <form id="formGroup" novalidate>
-    <div class="dh"><h2 id="grpTitle">Thêm mẫu nhiều màu / size</h2><button type="button" class="btn sm ghost" data-close>Đóng</button></div>
+    <div class="dh"><h2 id="grpTitle">Thêm hàng</h2><button type="button" class="btn sm ghost" data-close>Đóng</button></div>
     <div class="db">
+      <div class="full" id="gKindWrap"><div class="seg" role="group" aria-label="Kiểu mặt hàng">
+        <button type="button" class="k" data-kind="one">Một mã</button>
+        <button type="button" class="k" data-kind="var">Nhiều màu / size</button>
+      </div><p class="hint kind-hint" id="gKindHint"></p></div>
       <label class="full">Tên mẫu<input id="gName" class="field" required maxlength="100" placeholder="VD: Áo polo Toshiba"></label>
       <label>Mã mẫu<input id="gCode" class="field mono" required maxlength="16" autocomplete="off" placeholder="VD: POLO"></label>
       <label>Đơn vị tính<input id="gUnit" class="field" value="cái" maxlength="20"></label>
@@ -1598,7 +1607,8 @@ function readyPhotos(list){return Promise.all(list.map(function(x){return x.p}))
 var editing=null;
 function openItem(it){
   editing=it?it.sku:null;photos.item={add:[],remove:[]};
-  $("itemTitle").textContent=it?"Sửa mặt hàng":"Thêm mặt hàng";
+  $("itemTitle").textContent=it?"Sửa mặt hàng":"Thêm hàng";
+  $("iKindWrap").hidden=!!it;setKind("i","one");
   $("iSku").value=it?it.sku:"";$("iSku").readOnly=!!it;
   $("iName").value=it?it.name:"";$("iUnit").value=it?it.unit||"":"";
   $("iCat").value=it?it.cat||"":"";$("iLoc").value=it?it.loc||"":"";$("iDesc").value=it?it.desc||"":"";
@@ -1887,7 +1897,8 @@ $("gName").addEventListener("input",function(){if(!GN.append&&!GN.codeTouched){$
 $("gGrid").addEventListener("input",function(e){if(e.target.matches("input[data-sku]")){readVals($("gGrid"),GN.vals);e.target.closest(".gm-cell").classList.toggle("has",+e.target.value>0)}});
 function openGroup(e){
   GN={vals:{},append:e?e.g:null,codeTouched:!!e};
-  $("grpTitle").textContent=e?"Thêm màu / size cho “"+e.name+"”":"Thêm mẫu nhiều màu / size";
+  $("grpTitle").textContent=e?"Thêm màu / size cho “"+e.name+"”":"Thêm hàng";
+  $("gKindWrap").hidden=!!e;setKind("g","var");
   $("gName").value=e?e.name:"";$("gName").readOnly=!!e;$("gCode").value=e?e.g:"";$("gCode").readOnly=!!e;
   var f=e?e.items[0]:null;
   $("gUnit").value=f?f.unit||"":"cái";$("gCat").value=f?f.cat||"":"Quần áo";$("gLoc").value=f?f.loc||"":"";
@@ -1896,7 +1907,23 @@ function openGroup(e){
   $("gGridHint").textContent=e?"(số lượng nhập kho cho các mã mới)":"(tùy chọn — nhập số lượng từng màu × size)";
   renderGN();$("dlgGroup").showModal();setTimeout(function(){(e?$("gColors"):$("gName")).focus()},50);
 }
-$("btnAddGrp").onclick=function(){openGroup(null)};
+/* ---------- 1 nút “+ Hàng”, chọn kiểu ngay trong form: Một mã ⇄ Nhiều màu / size ---------- */
+var KIND_HINT={one:"Hàng không chia size/màu: dụng cụ, linh kiện, vật tư…",var:"Quần áo, giày… — mỗi màu × size có mã và tồn riêng, nhưng hiện chung 1 thẻ."};
+function setKind(p,k){document.querySelectorAll("#"+p+"KindWrap [data-kind]").forEach(function(b){b.setAttribute("aria-pressed",b.dataset.kind===k)});$(p+"KindHint").textContent=KIND_HINT[k]}
+var KMAP=[["iName","gName"],["iUnit","gUnit"],["iCat","gCat"],["iLoc","gLoc"],["iMin","gMin"],["iPrice","gPrice"],["iDesc","gDesc"]];
+$("iKindWrap").addEventListener("click",function(e){
+  var b=e.target.closest("[data-kind]");if(!b||b.dataset.kind!=="var")return;
+  var v={};KMAP.forEach(function(m){v[m[1]]=$(m[0]).value});var sku=$("iSku").value.trim();
+  $("dlgItem").close();openGroup(null);
+  KMAP.forEach(function(m){if(String(v[m[1]]).trim()!==""&&!(m[1]!=="gName"&&+v[m[1]]===0&&/Min|Price/.test(m[1])))$(m[1]).value=v[m[1]]});
+  $("gCode").value=sku?slugU(sku).slice(0,16):autoCode($("gName").value);GN.codeTouched=!!sku;renderGN();
+});
+$("gKindWrap").addEventListener("click",function(e){
+  var b=e.target.closest("[data-kind]");if(!b||b.dataset.kind!=="one")return;
+  var v={};KMAP.forEach(function(m){v[m[0]]=$(m[1]).value});var code=$("gCode").value.trim();
+  $("dlgGroup").close();openItem(null);
+  KMAP.forEach(function(m){$(m[0]).value=v[m[0]]});if(code)$("iSku").value=code;
+});
 $("formGroup").addEventListener("submit",function(ev){
   ev.preventDefault();readVals($("gGrid"),GN.vals);
   var gn=$("gName").value.trim(),code=slugU($("gCode").value.trim()).slice(0,16);
